@@ -26,7 +26,14 @@ case class IndexPage(tasks: List[Task], addTaskMapping: Mapping[String]):
     ),
     body(marginTop := 2.rem)(
       div(cls := "ui container")(
-        h1(cls := "ui dividing header", "To Do List"),
+        h1(cls := "ui dividing header", id:="timestamp-app")(
+          "To Do List ",
+
+          /**
+           * Implement span[class="ui label"] > {{timestamp}}
+           * This will automatically updated with server timestamp
+           */
+        ),
 
         form(cls := "ui form", method := "POST", action := HomeController.createTask.endpoint.url)(
           div(cls := "field", ifTrue(addTaskMapping.hasErrors, cls := "error"))(
@@ -54,11 +61,28 @@ case class IndexPage(tasks: List[Task], addTaskMapping: Mapping[String]):
 
       script(tpe := "text/javascript", src := "https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"),
       script(tpe := "text/javascript", src := "https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.3/dist/semantic.min.js"),
+      script(tpe := "text/javascript", src := "https://unpkg.com/vue@3/dist/vue.global.js"),
       script(tpe := "text/javascript",
         raw(
           """ /*
             |  *  Enter JavaScript code here
             |  */
+            | Vue.createApp({
+            |     data(){
+            |         return { timestamp: "" }
+            |     },
+            |     mounted(){
+            |         const self = this;
+            |
+            |         // Register service event listener
+            |         const sse = new EventSource("/api/getTime");
+            |         // On each data push from server, updates timestamp
+            |         sse.addEventListener("message", e => {
+            |             self.timestamp = e.data;
+            |         });
+            |     }
+            | }).mount("#timestamp-app");
+            |
             |""".stripMargin)
       )
     )

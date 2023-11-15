@@ -5,7 +5,14 @@ import com.greenfossil.jumpstart.day2.TaskList
 import com.greenfossil.data.mapping.Mapping.*
 import com.linecorp.armeria.server.annotation.*
 import com.greenfossil.thorium.{*, given}
+import com.linecorp.armeria.common.sse.ServerSentEvent
+import com.linecorp.armeria.server.streaming.ServerSentEvents
+import reactor.core.publisher.{Flux, Sinks}
 import views.jumpstart.day2.IndexPage
+
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.time.{Duration, LocalDateTime}
 
 object HomeController:
 
@@ -38,4 +45,15 @@ object HomeController:
    * Expectation: The matching task should be marked as completed
    */
   def completeTask(taskId: Long) = ???
+
+  @Get("/api/getTime")
+  def apiGetTime = Action { request =>
+    request.requestContext.clearRequestTimeout()
+    ServerSentEvents.fromPublisher(
+      Flux.interval(Duration.ofSeconds(1))
+        .map:seq =>
+          val now = LocalDateTime.now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
+          ServerSentEvent.ofData(now)
+    )
+  }
 
